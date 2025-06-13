@@ -6,10 +6,11 @@ import random
 import heapq
 from collections import defaultdict
 from math import gcd
+import csv
+import sys
+from typing import List, Dict, Any, Callable
 
-
-#// STRING MANIPULATION FUNCTIONS //#-------------------------------------------------------------------
-
+#// FILE I/O FUNCTIONS //#------------------------------------------------------------------------------
 def read_lines(path):
     """
     Read a text file and return a list of lines (newline stripped).
@@ -18,6 +19,123 @@ def read_lines(path):
     """
     with open(path, 'r') as f:
         return [line.rstrip('\n') for line in f]
+
+def read_csv_to_list(path: str, delimiter: str = ',') -> List[List[str]]:
+    """
+    Read a CSV file and return a list of rows, each row as a list of strings.
+    Usage:
+        rows = read_csv_to_list('data.csv')
+        # rows[0] == ['header1','header2',…]
+    """
+    with open(path, newline='') as f:
+        reader = csv.reader(f, delimiter=delimiter)
+        return [row for row in reader]
+
+def read_csv_to_dicts(path: str, delimiter: str = ',') -> List[Dict[str, str]]:
+    """
+    Read a CSV with a header row and return a list of dicts (one per row).
+    Keys come from the header.
+    Usage:
+        dicts = read_csv_to_dicts('data.csv')
+        # dicts[0]['column_name'] → value
+    """
+    with open(path, newline='') as f:
+        reader = csv.DictReader(f, delimiter=delimiter)
+        return [row for row in reader]
+    
+
+def read_csv_columns(path: str, delimiter: str = ',') -> Dict[str, List[str]]:
+    """
+    Read a CSV with header and return a dict-of-lists: column_name → list of values.
+    Usage:
+        cols = read_csv_columns('data.csv')
+        # cols['age'] → ['23','45',…]
+    """
+    with open(path, newline='') as f:
+        reader = csv.DictReader(f, delimiter=delimiter)
+        cols: Dict[str, List[str]] = {h: [] for h in reader.fieldnames or []}
+        for row in reader:
+            for h, v in row.items():
+                cols[h].append(v)
+    return cols
+
+def read_csv_to_typed(path: str,
+                    types: List[Callable[[str], Any]],
+                    delimiter: str = ',') -> List[List[Any]]:
+    """
+    Read CSV and apply `types[i]` to column i.
+    Usage:
+        # Suppose CSV columns: name (str), age (int), salary (float)
+        data = read_csv_to_typed('staff.csv',
+                                types=[str, int, float])
+        # data[0] → ['Alice', 30, 55000.0]
+    """
+    with open(path, newline='') as f:
+        reader = csv.reader(f, delimiter=delimiter)
+        return [[ty(val) for ty, val in zip(types, row)] for row in reader]
+    
+
+def read_text_to_lines(path: str) -> List[str]:
+    """
+    Read a text file and return a list of lines (newline stripped).
+    Usage:
+        lines = read_text_to_lines('notes.txt')
+    """
+    with open(path, 'r') as f:
+        return [line.rstrip('\n') for line in f]
+    
+def read_text_to_words(path: str, sep: str = None) -> List[str]:
+    """
+    Read a text file and split on `sep` (default: any whitespace).
+    Returns a flat list of all tokens.
+    Usage:
+        words = read_text_to_words('words.txt')
+    """
+    with open(path, 'r') as f:
+        text = f.read()
+    return text.split(sep)
+
+def read_text_to_matrix(path: str,
+                        row_sep: str = '\n',
+                        col_sep: str = None,
+                        dtype: Callable[[str], Any] = str
+                        ) -> List[List[Any]]:
+    """
+    Read a text file and parse into a 2D list.
+    Splits on `row_sep` then `col_sep`; casts each token via `dtype`.
+    Usage:
+        # For grid of ints separated by spaces:
+        mat = read_text_to_matrix('grid.txt', col_sep=' ', dtype=int)
+    """
+    with open(path, 'r') as f:
+        content = f.read().rstrip(row_sep)
+    rows = content.split(row_sep)
+    return [
+        [dtype(tok) for tok in (row.split(col_sep) if col_sep else [row])]
+        for row in rows
+    ]
+
+def read_text_to_dict(path: str,
+                    key_val_sep: str = ':',
+                    line_sep: str = '\n'
+                    ) -> Dict[str, str]:
+    """
+    Read a file where each line is "key{key_val_sep}value" and return a dict.
+    Usage:
+        # settings.txt contains lines like "timeout:30"
+        cfg = read_text_to_dict('settings.txt')
+        # cfg['timeout'] → '30'
+    """
+    with open(path, 'r') as f:
+        lines = f.read().split(line_sep)
+    result: Dict[str, str] = {}
+    for line in lines:
+        if key_val_sep in line:
+            k, v = line.split(key_val_sep, 1)
+            result[k.strip()] = v.strip()
+    return result
+
+#// STRING MANIPULATION FUNCTIONS //#-------------------------------------------------------------------
 
 def input(): 
     return sys.stdin.readline().rstrip('\n')
