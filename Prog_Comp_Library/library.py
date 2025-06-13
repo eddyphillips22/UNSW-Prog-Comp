@@ -1,7 +1,9 @@
 import sys
 import re
 import string
+import math
 import random
+import heapq
 from collections import defaultdict
 from math import gcd
 
@@ -53,6 +55,22 @@ def insert_string(x, y, pos):
         insert_string("XX", "hello", 2)  # → "heXXllo"
     """
     return y[:pos] + x + y[pos:]    
+
+def read_ints():
+    """
+    Read a line and map to ints: a, b, c = read_ints()
+    """
+    return map(int, sys.stdin.readline().split())
+
+def read_list_of_ints():
+    """Read a line and return a list of ints"""
+    return list(read_ints())
+
+def read_matrix(rows, dtype=int):
+    """
+    Read `rows` lines of space-separated values of type `dtype`
+    """
+    return [list(map(dtype, sys.stdin.readline().split())) for _ in range(rows)]
 
 #// MATH FUNCTIONS //#-------------------------------------------------------------------------------------
 
@@ -182,3 +200,193 @@ def generate_index(words):
         idx[word].append(lineno)
     for word in sorted(idx):
         print(f"{word}: {', '.join(map(str, idx[word]))}")
+
+#// SORTING AND SEARCHING \\------------------------------------------------------------------
+
+def linear_search(arr, target):
+    """
+    Linear (sequential) search.
+    Time: O(n), Space: O(1)
+    Returns the index of the first occurrence of target in arr, or -1 if not found.
+    """
+    for i, v in enumerate(arr):
+        if v == target:
+            return i
+    return -1
+
+def binary_search(arr, target):
+    """
+    Iterative binary search on a sorted array.
+    Time: O(log n), Space: O(1)
+    Returns the index of target, or -1 if not found.
+    """
+    lo, hi = 0, len(arr) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+
+def binary_search_recursive(arr, target, lo=0, hi=None):
+    """
+    Recursive binary search.
+    Time: O(log n), Space: O(log n) due to recursion.
+    """
+    if hi is None:
+        hi = len(arr) - 1
+    if lo > hi:
+        return -1
+    mid = (lo + hi) // 2
+    if arr[mid] == target:
+        return mid
+    elif arr[mid] < target:
+        return binary_search_recursive(arr, target, mid+1, hi)
+    else:
+        return binary_search_recursive(arr, target, lo, mid-1)
+    
+def jump_search(arr, target):
+    """
+    Jump search on a sorted array.
+    Time: O(√n), Space: O(1)
+    """
+    n = len(arr)
+    step = int(math.sqrt(n))
+    prev = 0
+    # find block
+    while prev < n and arr[min(n-1, prev+step)] < target:
+        prev += step
+    # linear search within block
+    for i in range(prev, min(prev+step, n)):
+        if arr[i] == target:
+            return i
+    return -1
+
+def interpolation_search(arr, target):
+    """
+    Interpolation search on uniformly distributed sorted array.
+    Time avg: O(log log n), worst O(n), Space: O(1)
+    """
+    lo, hi = 0, len(arr) - 1
+    while lo <= hi and target >= arr[lo] and target <= arr[hi]:
+        # avoid division by zero
+        if arr[hi] == arr[lo]:
+            if arr[lo] == target:
+                return lo
+            break
+        # probe
+        pos = lo + ((target - arr[lo]) * (hi - lo)) // (arr[hi] - arr[lo])
+        if pos < lo or pos > hi:
+            break
+        if arr[pos] == target:
+            return pos
+        if arr[pos] < target:
+            lo = pos + 1
+        else:
+            hi = pos - 1
+    return -1
+
+def bubble_sort(arr):
+    """
+    Bubble sort.
+    Time: O(n²), Space: O(1)
+    Returns a new sorted list.
+    """
+    a = arr.copy()
+    n = len(a)
+    for i in range(n):
+        swapped = False
+        for j in range(0, n-i-1):
+            if a[j] > a[j+1]:
+                a[j], a[j+1] = a[j+1], a[j]
+                swapped = True
+        if not swapped:
+            break
+    return a
+
+def selection_sort(arr):
+    """
+    Selection sort.
+    Time: O(n²), Space: O(1)
+    """
+    a = arr.copy()
+    n = len(a)
+    for i in range(n):
+        # find min in a[i:]
+        m = i
+        for j in range(i+1, n):
+            if a[j] < a[m]:
+                m = j
+        a[i], a[m] = a[m], a[i]
+    return a
+
+def insertion_sort(arr):
+    """
+    Insertion sort.
+    Time: O(n²), Space: O(1)
+    """
+    a = arr.copy()
+    for i in range(1, len(a)):
+        key = a[i]
+        j = i - 1
+        while j >= 0 and a[j] > key:
+            a[j+1] = a[j]
+            j -= 1
+        a[j+1] = key
+    return a
+
+def merge_sort(arr):
+    """
+    Merge sort.
+    Time: O(n log n), Space: O(n)
+    """
+    if len(arr) <= 1:
+        return arr[:]
+    mid = len(arr)//2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    merged = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            merged.append(left[i]); i += 1
+        else:
+            merged.append(right[j]); j += 1
+    merged.extend(left[i:])
+    merged.extend(right[j:])
+    return merged
+
+def quick_sort(arr):
+    """
+    Quick sort (in-place Lomuto partition).
+    Time avg: O(n log n), worst O(n²), Space: O(log n) recursion.
+    """
+    a = arr.copy()
+    def _qs(lo, hi):
+        if lo < hi:
+            p = partition(lo, hi)
+            _qs(lo, p-1)
+            _qs(p+1, hi)
+    def partition(lo, hi):
+        pivot = a[hi]
+        i = lo
+        for j in range(lo, hi):
+            if a[j] < pivot:
+                a[i], a[j] = a[j], a[i]
+                i += 1
+        a[i], a[hi] = a[hi], a[i]
+        return i
+    _qs(0, len(a)-1)
+    return a
+
+def heap_sort(arr):
+    """
+    Heap sort using heapq.
+    Time: O(n log n), Space: O(n)
+    """
+    a = arr.copy()
+    heapq.heapify(a)
+    return [ heapq.heappop(a) for _ in range(len(a)) ]
