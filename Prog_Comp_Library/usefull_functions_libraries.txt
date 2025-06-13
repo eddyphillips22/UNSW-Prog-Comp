@@ -1,0 +1,210 @@
+# Comprehensive Python Utility Functions and Usage
+
+## os — File & Directory Operations
+```python
+import os
+
+# Get current working directory
+cwd = os.getcwd()
+print("CWD:", cwd)
+
+# List files in a directory
+files = os.listdir(cwd)
+print("Files:", files)
+
+# Build a path in a cross-platform way
+path = os.path.join(cwd, "input.txt")
+
+# Make a directory (and parents) if it doesn’t exist
+os.makedirs("data/logs", exist_ok=True)
+
+# Delete a file
+if os.path.exists("temp.txt"):
+    os.remove("temp.txt")
+```
+
+## sys — Interpreter & I/O
+```python
+import sys
+
+# Command-line arguments
+#   python solution.py input.txt 5
+filename = sys.argv[1]
+n = int(sys.argv[2])
+
+# Fast exit with an error code
+if n < 0:
+    sys.exit("n must be non-negative")
+
+# Fast I/O
+line = sys.stdin.readline().rstrip('\n')
+sys.stdout.write(f"Read line: {line}\n")
+```
+
+## math — Common Math Functions
+```python
+import math
+
+print(math.sqrt(2))        # → 1.414…
+print(math.ceil(3.2))      # → 4
+print(math.floor(3.8))     # → 3
+print(math.sin(math.pi/2)) # → 1.0
+print(math.factorial(5))   # → 120
+print(math.gcd(24, 36))    # → 12
+```
+
+## itertools — Powerful Iterators
+```python
+import itertools
+
+# Cartesian product
+for a, b in itertools.product([1,2], ['x','y']):
+    print(a, b)
+
+# Permutations of length 2
+list(itertools.permutations([1,2,3], 2))
+# → [(1,2), (1,3), (2,1), (2,3), (3,1), (3,2)]
+
+# Combinations of length 2
+list(itertools.combinations([1,2,3], 2))
+# → [(1,2), (1,3), (2,3)]
+
+# Prefix sums (running total)
+list(itertools.accumulate([1,2,3,4]))
+# → [1, 3, 6, 10]
+
+# Group consecutive equal elements
+for key, group in itertools.groupby("AAABBBCCDAA"):
+    print(key, len(list(group)))
+
+# Infinite cycle
+cycler = itertools.cycle([0,1])
+for _ in range(5):
+    print(next(cycler))
+```
+
+## collections — Specialized Containers
+```python
+from collections import defaultdict, Counter, deque, namedtuple, OrderedDict
+
+# defaultdict: auto-init values
+dd = defaultdict(int)
+dd['a'] += 1     # → {'a': 1}
+
+# Counter: frequency counting
+cnt = Counter("abracadabra")
+print(cnt.most_common(2))  # → [('a',5), ('b',2)]
+
+# deque: fast pops from both ends
+dq = deque([1,2,3])
+dq.appendleft(0)
+dq.pop()          # → 3
+
+# namedtuple: lightweight record
+Point = namedtuple('Point', ['x','y'])
+p = Point(3,4)
+print(p.x, p.y)
+
+# OrderedDict: remembers insertion order (Py<3.7)
+od = OrderedDict()
+od['first'] = 1
+od['second'] = 2
+```
+
+## functools — Function Tools
+```python
+from functools import lru_cache, partial, reduce
+
+# Memoize an expensive function
+@lru_cache(maxsize=None)
+def fib(n):
+    if n < 2: return n
+    return fib(n-1) + fib(n-2)
+
+# Create a new function with some args fixed
+pow2 = partial(pow, 2)      # pow2(exp) == pow(2, exp)
+print(pow2(10))             # → 1024
+
+# Reduce: fold a sequence into one value
+product = reduce(lambda x,y: x*y, [1,2,3,4], 1)
+print(product)              # → 24
+```
+
+## random — Pseudo-Random Generators
+```python
+import random
+
+print(random.random())        # → float in [0,1)
+print(random.randint(1, 6))   # → int in [1,6]
+print(random.choice([10,20,30]))
+lst = [1,2,3,4,5]
+random.shuffle(lst)           # in-place shuffle
+print(lst)
+print(random.sample(range(100), k=5))  # 5 unique picks
+```
+
+## datetime — Dates & Times
+```python
+from datetime import date, datetime, timedelta
+
+# Today’s date
+today = date.today()
+print(today)          # → e.g. 2025-06-13
+
+# Current timestamp
+now = datetime.now()
+print(now.strftime("%Y/%m/%d %H:%M:%S"))
+
+# Add/subtract days
+tomorrow = today + timedelta(days=1)
+print(tomorrow)
+
+# Parse a date string
+dt = datetime.strptime("2025-01-01", "%Y-%m-%d")
+```
+
+## subprocess — External Commands
+```python
+import subprocess
+
+# Run a command and capture its output
+res = subprocess.run(
+    ["echo", "Hello, world!"],
+    capture_output=True,
+    text=True
+)
+print(res.stdout)   # → "Hello, world!\n"
+
+# Check return code
+if res.returncode != 0:
+    print("Command failed")
+```
+
+## numpy — Numerical Arrays & Linear Algebra
+```python
+import numpy as np
+
+# Create arrays
+a = np.array([1,2,3])
+b = np.arange(0, 1, 0.2)     # [0. ,0.2,0.4,0.6,0.8]
+z = np.zeros((2,3))          # 2×3 of 0.0
+o = np.ones((3,2))           # 3×2 of 1.0
+
+# Basic ops
+print(a + 5)                 # [6,7,8]
+print(np.dot(a, [4,5,6]))    # 1*4+2*5+3*6 = 32
+print(np.sum(a), np.mean(a))
+
+# Reshape & transpose
+M = np.arange(6).reshape(2,3)
+print(M.T)                   # swap axes → 3×2
+
+# Linear algebra
+A = np.array([[1,2],[3,4]])
+invA = np.linalg.inv(A)
+detA = np.linalg.det(A)
+eigvals, eigvecs = np.linalg.eig(A)
+
+# FFT
+freq = np.fft.fft([0,1,0,-1])
+```
